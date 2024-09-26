@@ -8,20 +8,46 @@ import (
 	"os"
 	"time"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	gomail "gopkg.in/mail.v2"
 )
 
 var (
 	LOG_FILE    string
+	TG_API_KEY  string
+	TG_CHAT_ID  int64
 	EMAIL_USER  string
 	EMAIL_PASS  string
 	MAIL_TO     string
 	SMTP_SERVER string
 	SMTP_PORT   int
 	SENDMAIL    bool
+	DEBUG       bool
 	ip_server   string
 	ip_port     string
+	BOT         *tgbotapi.BotAPI
 )
+
+func FNewTgBot() *tgbotapi.BotAPI {
+	bot, err := tgbotapi.NewBotAPI(TG_API_KEY)
+	if err != nil {
+		log.Printf("TG ERROR: AUTH FAIL! Check your api_key %s", err.Error())
+	}
+
+	bot.Debug = DEBUG
+	// FLogging("TELEGRAM INFO: Успешная авторизация бота: ")
+
+	if DEBUG {
+		log.Printf("Authorized on account %s", bot.Self.UserName)
+	}
+
+	return bot
+}
+
+func FSendTG(Message string) {
+	msg := tgbotapi.NewMessage(TG_CHAT_ID, Message)
+	BOT.Send(msg)
+}
 
 func FSendMail(Message string) {
 
@@ -67,13 +93,21 @@ func MakeConnection(server_addr *string, server_port *string) (connection net.Co
 
 func isTCPWorking(c net.Conn) bool {
 	_, err := c.Write([]byte("Client send data from local address: " + c.LocalAddr().String()))
+
+	if DEBUG {
+		FLogging("Client send data from local address: " + c.LocalAddr().String())
+		FSendTG("Client send data from local address: " + c.LocalAddr().String())
+	}
+
 	if err != nil {
 		c.Close()
+		message := "Connection to server - " + c.LocalAddr().String() + " <-> " + c.RemoteAddr().String() + " lost!"
 		if SENDMAIL {
-			FSendMail("Connection to server - " + c.LocalAddr().String() + " <-> " + c.RemoteAddr().String() + " lost!")
+			FSendMail(message)
 		}
 
-		FLogging("Connection to server - " + c.LocalAddr().String() + " <-> " + c.RemoteAddr().String() + " lost!")
+		FLogging(message)
+		FSendTG(message)
 		return false
 	}
 	return true
@@ -81,6 +115,14 @@ func isTCPWorking(c net.Conn) bool {
 
 func main() {
 
+	// FOR TG MESSAGES
+	flag.StringVar(&TG_API_KEY, "api_key", "7865916854:AAGQzPTJ4VORITCCxbXatuO6OkZt6S7V2DQ", "Telegram BOT API KEY")
+	flag.Int64Var(&TG_CHAT_ID, "chat_id", -389281593, "ID группы где постить уведомления.")
+	flag.BoolVar(&DEBUG, "debug", true, "Включить Debug? По умолчанию: false.")
+
+	BOT = FNewTgBot()
+
+	// FOR MAIL SEND MESSAGE
 	flag.StringVar(&EMAIL_USER, "from", "user@example.com", "Адрес e-mail с которого слать уведомления.")
 	flag.StringVar(&EMAIL_PASS, "password", "password", "Пароль от e-mail адреса.")
 	flag.StringVar(&MAIL_TO, "to", "notify@example.com", "Адрес e-mail куда слать уведомления.")
@@ -90,7 +132,7 @@ func main() {
 
 	flag.StringVar(&ip_server, "s", "127.0.0.1", "IP адрес сервера на котором установлен tcp_checker_server.")
 	flag.StringVar(&ip_port, "p", "8080", "TCP Порт tcp_ckecker")
-	flag.StringVar(&LOG_FILE, "log", "/var/log/tcp_checker_client.log", "Путь до файла куда писать логи.")
+	flag.StringVar(&LOG_FILE, "log", "./logs/tcp_checker_client.log", "Путь до файла куда писать логи.")
 
 	flag.Parse()
 
@@ -103,11 +145,18 @@ func main() {
 			continue
 		}
 
+		message := "NEW Connection to server - " + raddr + " from: " + laddr + "!"
+
+		// Send MAIL
 		if SENDMAIL {
-			FSendMail("NEW Connection to server - " + raddr + " from: " + laddr + "!")
+			FSendMail(message)
 		}
 
-		FLogging("NEW Connection to server - " + raddr + " from: " + laddr + "!")
+		// Send Message to Telegram
+		FSendTG(message)
+
+		// Logging Message
+		FLogging(message)
 
 		for isTCPWorking(conn) {
 			time.Sleep(1 * time.Second)
