@@ -6,27 +6,28 @@ import (
 	"io"
 	"log"
 	"net"
+	"strconv"
 )
 
 var (
 	server_addr string
-	server_port string
+	server_port int
 )
 
 func main() {
 
 	flag.StringVar(&server_addr, "s", "0.0.0.0", "Server ip address or hostname for listen.")
-	flag.StringVar(&server_port, "p", "8080", "Server TCP port for listen.")
+	flag.IntVar(&server_port, "p", 8080, "Server TCP port for listen.")
 
 	flag.Parse()
 
-	server, err := net.Listen("tcp", *&server_addr+":"+*&server_port)
+	server, err := net.Listen("tcp", *&server_addr+":"+strconv.Itoa(*&server_port))
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer server.Close()
 
-	log.Println("Server is running on:" + *&server_addr + ":" + *&server_port)
+	log.Println("Server is running on:" + *&server_addr + ":" + strconv.Itoa(*&server_port))
 
 	for {
 		conn, err := server.Accept()

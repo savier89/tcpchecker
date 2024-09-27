@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -23,8 +24,8 @@ var (
 	SMTP_PORT   int
 	SENDMAIL    bool
 	DEBUG       bool
-	ip_server   string
-	ip_port     string
+	IP_SERVER   string
+	IP_PORT     int
 	BOT         *tgbotapi.BotAPI
 )
 
@@ -76,8 +77,8 @@ func FLogging(Message string) {
 	log.Println(Message)
 }
 
-func MakeConnection(server_addr *string, server_port *string) (connection net.Conn, raddr string, laddr string, err error) {
-	conn, err := net.Dial("tcp", *server_addr+":"+*server_port)
+func MakeConnection(server_addr *string, server_port *int) (connection net.Conn, raddr string, laddr string, err error) {
+	conn, err := net.Dial("tcp", *server_addr+":"+strconv.Itoa(*server_port))
 	if err != nil {
 		return
 	}
@@ -120,6 +121,7 @@ func main() {
 	flag.Int64Var(&TG_CHAT_ID, "chat_id", -389281593, "ID группы где постить уведомления.")
 	flag.BoolVar(&DEBUG, "debug", false, "Включить Debug? По умолчанию: false.")
 
+	// BOT Init
 	BOT = FNewTgBot()
 
 	// FOR MAIL SEND MESSAGE
@@ -127,20 +129,21 @@ func main() {
 	flag.StringVar(&EMAIL_PASS, "password", "password", "Пароль от e-mail адреса.")
 	flag.StringVar(&MAIL_TO, "to", "notify@example.com", "Адрес e-mail куда слать уведомления.")
 	flag.StringVar(&SMTP_SERVER, "smtp", "smtp.gmail.com", "SMTP Server.")
-	flag.IntVar(&SMTP_PORT, "port", 587, "SMTP Server port")
+	flag.IntVar(&SMTP_PORT, "smtp_port", 587, "SMTP Server port")
 	flag.BoolVar(&SENDMAIL, "sm", false, "Отправлять почту? По умолчанию: false.")
 
-	flag.StringVar(&ip_server, "s", "127.0.0.1", "IP адрес сервера на котором установлен tcp_checker_server.")
-	flag.StringVar(&ip_port, "p", "8080", "TCP Порт tcp_ckecker")
+	// FOR TCP CHECK
+	flag.StringVar(&IP_SERVER, "s", "127.0.0.1", "IP адрес сервера на котором установлен tcp_checker_server.")
+	flag.IntVar(&IP_PORT, "p", 8080, "TCP Порт tcp_ckecker")
 	flag.StringVar(&LOG_FILE, "log", "./logs/tcp_checker_client.log", "Путь до файла куда писать логи.")
 
 	flag.Parse()
 
 	for {
-		conn, raddr, laddr, err := MakeConnection(&ip_server, &ip_port)
+		conn, raddr, laddr, err := MakeConnection(&IP_SERVER, &IP_PORT)
 
 		if err != nil {
-			FLogging("Connection to server - " + ip_server + " refused!")
+			FLogging("Connection to server - " + IP_SERVER + " refused!")
 			time.Sleep(3 * time.Second)
 			continue
 		}
