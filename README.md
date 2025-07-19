@@ -1,4 +1,4 @@
-# tcpchecker
+# tcpchecker bot TG or Email, work with NAT.
 
 ### How-to build
 
