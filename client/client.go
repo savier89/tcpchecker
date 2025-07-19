@@ -117,7 +117,7 @@ func isTCPWorking(c net.Conn) bool {
 func main() {
 
 	// FOR TG MESSAGES
-	flag.StringVar(&TG_API_KEY, "api_key", "Change TG API KET HERE", "Telegram BOT API KEY")
+	flag.StringVar(&TG_API_KEY, "api_key", "Change TG API KET here", "Telegram BOT API KEY")
 	flag.Int64Var(&TG_CHAT_ID, "chat_id", "Change TG Group id here", "ID группы где постить уведомления.")
 	flag.BoolVar(&DEBUG, "debug", false, "Включить Debug? По умолчанию: false.")
 
