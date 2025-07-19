@@ -13,6 +13,10 @@
     # Build client APP
     go build -o tcp_checker client/client.go
 
+### Chang Telegramm Bot id and Group id
+    flag.StringVar(&TG_API_KEY, "api_key", "Change TG API KET HERE", "Telegram BOT API KEY")
+    flag.Int64Var(&TG_CHAT_ID, "chat_id", "Change TG Group id here", "ID группы где постить уведомления.") 
+
 ### Server usage commands
 
     $ ./tcp_checker_server -h 
